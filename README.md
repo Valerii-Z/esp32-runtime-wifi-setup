@@ -28,7 +28,7 @@ The app also allows to change existing connection settings using a physical butt
 ## 🔧 How to Build & Flash
 1.  **Clone the repository**:
     ```bash
-    git clone https://github.com
+    git clone https://github.com/Valerii-Z/esp32-runtime-wifi-setup
     ```
 2.  **Open in VS Code**:
     Launch VS Code and open the project folder.
