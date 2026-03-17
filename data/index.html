@@ -1,0 +1,78 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <title>ESP32 wifi runtime connection</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:,">
+    <style>
+        html {
+            font-family: New Times Roman;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: white;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #07156d;
+        }
+
+        .card {
+            background-color: #F8F7F9;
+            ;
+            box-shadow: 2px 2px 12px 1px rgba(140, 140, 140, .5);
+            padding-top: 10px;
+            padding-bottom: 20px;
+        }
+
+        .topnav {
+            overflow: hidden;
+            background-color: #196f13;
+        }
+
+        body {
+            margin: 0;
+        }
+
+        .content {
+            padding: 30px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .state {
+            font-size: 1.5rem;
+            color: #120707;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="topnav">
+        <h1>ESP32 Main Web Server</h1>
+    </div>
+    <div class="content">
+        <div class="card">
+            <h2>ESP32  connection properties</h2>
+            <p><span>ESP32 connected in STA mode to AP: <strong>%s</strong></span><br>
+            ESP32 received ip: <strong><span id=ipadr></span></strong></p>
+            <p>SSID and password successfully was stored into NVS</p>
+        </div>
+    </div>
+    </div>
+    <script>
+        const ipadr = document.getElementById('ipadr');
+
+    	/* --- 1. Определяем адрес сервера --- */
+        ipadr.textContent =window.location.hostname;
+        
+    </script>
+</body>
+
+</html>
