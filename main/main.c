@@ -41,7 +41,7 @@ char *networks_list;
 char index_html[2048];
 char response_data[2048];
 
-static void initi_web_page_buffer(void)
+static void init_web_page_buffer(void)
 {
     esp_vfs_spiffs_conf_t conf = {
         .base_path = "/spiffs",
@@ -111,15 +111,15 @@ esp_err_t index_get_handler(httpd_req_t *req) {
         "<!DOCTYPE html><html><head><meta charset='utf-8'>"
         "<meta name='viewport' content='width=device-width, initial-scale=1'>"
         "<title>Wi-Fi Setup</title></head><body>"
-        "<h2>Оберіть мережу</h2>"
+        "<h2>Select network</h2>"
         "<form method='POST' action='/save'>");
 
     httpd_resp_sendstr_chunk(req, networks_list);
 
     httpd_resp_sendstr_chunk(req,
-        "<input type='password' name='password' placeholder='Пароль' "
+        "<input type='password' name='password' placeholder='password' "
         "style='width:60%; padding:10px;'>"
-        "<br><br><input type='submit' value='Підключитись' "
+        "<br><br><input type='submit' value='Connect' "
         "style='padding:10px 20px;'>"
         "</form></body></html>");
 
@@ -127,7 +127,7 @@ esp_err_t index_get_handler(httpd_req_t *req) {
     return ESP_OK;
 }
 
-// Handler for a client-submitted form with ssid and password
+// Handler for a client-submitted form with credentials
 esp_err_t wifi_config_post_handler(httpd_req_t *req) {
     char buf[128]; 
     int ret = httpd_req_recv(req, buf, MIN(req->content_len, sizeof(buf) - 1));
@@ -139,12 +139,12 @@ esp_err_t wifi_config_post_handler(httpd_req_t *req) {
     // getting SSID and password 
     httpd_query_key_value(buf, "ssid", ssid_raw, sizeof(ssid_raw));
 
-    if (httpd_query_key_value(buf, "password", pass_raw, sizeof(pass_raw));
+    httpd_query_key_value(buf, "password", pass_raw, sizeof(pass_raw));
 
     ESP_LOGI(TAG, "Received: SSID='%s', PASS='%s'", ssid_raw, pass_raw);
 
    /*Attempt to connect to the access point in STA mode 
-    using the received ssid and password values.*/
+    using the received credentials */
     // Initialize and populate wifi_config_t with SSID and password
     wifi_config_t wifi_config = {0};
     snprintf((char *)wifi_config.sta.ssid, sizeof(wifi_config.sta.ssid), "%s", ssid_raw);
@@ -156,7 +156,7 @@ esp_err_t wifi_config_post_handler(httpd_req_t *req) {
     s_retry_num = MAX_FAILURES; // Blocking auto connect 
 
     esp_wifi_disconnect(); 
-    vTaskDelay(pdMS_TO_TICKS(100);
+    vTaskDelay(pdMS_TO_TICKS(100));
     esp_err_t err = esp_wifi_set_config(WIFI_IF_STA, &wifi_config);
     esp_wifi_connect();
     
@@ -205,13 +205,14 @@ esp_err_t wifi_config_post_handler(httpd_req_t *req) {
         ESP_LOGE(TAG, "Can't write settings in NVS: %s", esp_err_to_name(err));
         
         char error_msg[100];
-        snprintf(error_msg, sizeof(error_msg), "Помилка збереження: %s", esp_err_to_name(err));
+        snprintf(error_msg, sizeof(error_msg), "Error to store settings: %s", esp_err_to_name(err));
         httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, error_msg);
     }
 
     return ESP_OK;
 }
 
+// http server for configuration connection
 httpd_handle_t start_conf_webserver(void) {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     httpd_handle_t server = NULL;
@@ -226,7 +227,7 @@ httpd_handle_t start_conf_webserver(void) {
         };
         httpd_register_uri_handler(server, &index_get);
 
-        // POST запит — отримуємо SSID та пароль
+        // POST for SSID and password
         httpd_uri_t config_post = {
             .uri      = "/save",
             .method   = HTTP_POST,
@@ -247,6 +248,7 @@ esp_err_t get_req_handler(httpd_req_t *req)
     return response;
 }
 
+// main http server. Run when ESP32 in STA mode
 httpd_handle_t start_main_webserver(void)
 {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
@@ -266,50 +268,50 @@ httpd_handle_t start_main_webserver(void)
 static void event_handler(void* arg, esp_event_base_t event_base,
                                 int32_t event_id, void* event_data) {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
-        // Сбрасываем флаги подключения
+        // Clear event bits
         xEventGroupClearBits(s_wifi_event_group, (WIFI_FAIL_BIT | WIFI_CONNECTED_BIT)); 
         esp_wifi_connect();
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        // Сбрасываем флаг подключения, если он был установлен
+        //  Clear the connection bit if set
         xEventGroupClearBits(s_wifi_event_group, WIFI_CONNECTED_BIT); 
         wifi_event_sta_disconnected_t* event = (wifi_event_sta_disconnected_t*) event_data;
         s_disconnect_reason = event->reason; 
         if (s_retry_num < MAX_FAILURES) {
             esp_wifi_connect();
             s_retry_num++;
-            ESP_LOGI(TAG, "Спроба підключення до роутера... (%d/%d)", s_retry_num, MAX_FAILURES);
+            ESP_LOGI(TAG, "Attempt to connect... (%d/%d)", s_retry_num, MAX_FAILURES);
         } else {
-            ESP_LOGW(TAG, "Не вдалося підключитися.");
+            ESP_LOGW(TAG, "Error to connect.");
             xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
         }
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
-        // Устанавливаем флаг "подключено"
+        // Set apropriate bits
         xEventGroupSetBits(s_wifi_event_group, (WIFI_CONNECTED_BIT | IP_GOTADR_BIT)); 
         s_retry_num = 0;
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
         snprintf(IP_STA, sizeof(IP_STA), IPSTR,IP2STR(&event->ip_info.ip));
-        ESP_LOGI(TAG, "Підключено! IP: %s", IP_STA);
+        ESP_LOGI(TAG, "Connected! IP: %s", IP_STA);
     }
 }
 
 void start_softap_and_scan(void) {
-    // --- 1. Сканирование в режиме STA-only ---
+    // Scan in STA mode only ---
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_start());
     
-    vTaskDelay(pdMS_TO_TICKS(500)); // ждём поднятия STA
+    vTaskDelay(pdMS_TO_TICKS(500)); // waiting start STA
 
-    // Сканируем Wi-Fi
+    // Scan WiFi and store founded APs in networks_list
     networks_list = scan_wifi_networks();
     esp_wifi_stop();
 
-    // --- 2. Поднимаем SoftAP ---
+    // ---start SoftAP ---
     esp_netif_create_default_wifi_ap();
     wifi_config_t ap_config = {
         .ap = {
             .ssid = "ESP32_Setup",
             .ssid_len = strlen("ESP32_Setup"),
-            .password = "12345678", // можно пустой, если WPA2 не нужен
+            .password = "12345678", 
             .max_connection = 4,
             .authmode = WIFI_AUTH_WPA2_PSK
         }
@@ -325,7 +327,7 @@ void start_softap_and_scan(void) {
 esp_err_t connect_wifi_sta(void){
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_start());
-    // 4. Очікування результату (Блокуючий виклик з таймаутом)
+    // waiting when apropriate bits will be set
     EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group,
         WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
         pdTRUE, pdFALSE, portMAX_DELAY);
@@ -339,7 +341,7 @@ esp_err_t connect_wifi_sta(void){
     else return ESP_FAIL;
 }
 
-/* обработчик нажатия кнопки */
+// Handler for button press
 static void IRAM_ATTR button_isr_handler(void* arg) {
     uint32_t gpio_num = (uint32_t) arg;
     xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL); 
@@ -353,7 +355,7 @@ static void button_task(void* arg) {
     int blink_cnt = 0;
 
     for(;;) {
-        // 1. Швидка перевірка черги (майже не блокує)
+        // Quick check queue
         if (xQueueReceive(gpio_evt_queue, &io_num, pdMS_TO_TICKS(50))) {
             int level = gpio_get_level(BUTTON_PIN);
             if (level == 0) {
@@ -361,11 +363,11 @@ static void button_task(void* arg) {
                 reset_ready = false;
                 press_start_time = esp_timer_get_time();
                 gpio_set_level(LED_PIN, 1);
-                ESP_LOGI("BTN", "Затиснуто");
+                ESP_LOGI("BTN", "Pressed");
             } else {
                 if (is_pressed && reset_ready) {
                     gpio_set_level(LED_PIN, 0);
-                    ESP_LOGW("BTN", "Скидання!");
+                    ESP_LOGW("BTN", "Released!");
                     esp_wifi_restore();
                     vTaskDelay(pdMS_TO_TICKS(500));
                     esp_restart();
@@ -373,28 +375,28 @@ static void button_task(void* arg) {
                 is_pressed = false;
                 reset_ready = false;
                 gpio_set_level(LED_PIN, 0);
-                ESP_LOGI("BTN", "Відпущено");
+                ESP_LOGI("BTN", "Released");
             }
         }
 
-        // 2. Логіка блимання (виконується кожні 50 мс)
+        // Blinking logic (run every 50 ms)
         if (is_pressed) {
             int64_t duration = (esp_timer_get_time() - press_start_time) / 1000;
             blink_cnt++;
             if (duration > 5000) {
                 reset_ready = true;
-                // Швидке блимання: кожні 200 мс (інвертуємо кожні 2 цикли по 100мс)
+                // Quick blinking: every 200 ms 
                 gpio_set_level(LED_PIN, (duration / 200) % 2);
             }   
         }
-        // 3. ФІКСОВАНА ПАУЗА (дає час іншим задачам і задає ритм блиманню)
+        // Delay that defines the blinking pattern
         vTaskDelay(pdMS_TO_TICKS(50)); 
     }
 }
 
 void init_button(void) {
     gpio_config_t io_conf = {
-        .intr_type = GPIO_INTR_ANYEDGE, // Ловимо обидва фронти
+        .intr_type = GPIO_INTR_ANYEDGE, // Both edges
         .mode = GPIO_MODE_INPUT,
         .pin_bit_mask = (1ULL << BUTTON_PIN),
         .pull_up_en = GPIO_PULLUP_ENABLE,
@@ -420,7 +422,7 @@ void app_main(void){
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
-    // 2. Запускаємо задачу кнопки (вона працює завжди в фоні)
+        // Start button and LED tasks
     init_button();
     init_led();
 
@@ -433,41 +435,40 @@ void app_main(void){
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
-    //ESP_ERROR_CHECK(esp_wifi_restore());  Для тестов
-
+    // Register event handlers
     esp_event_handler_instance_t instance_any_id;
     esp_event_handler_instance_t instance_got_ip;
     ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID,
         &event_handler, NULL, &instance_any_id));
     ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP,
-        &event_handler, NULL,&instance_got_ip));
+        &event_handler, NULL, &instance_got_ip));
         
-        // Проверяем, была ли в NVS ранее сохранённая конфигурация
+    // Check for existing Wi-Fi configuration in NVS
     wifi_config_t conf = {0};
     esp_wifi_get_config(WIFI_IF_STA, &conf);
 
     if (conf.sta.ssid[0] == 0) {
-        // КЕЙС А: Налаштувань немає (або вони щойно стерті кнопкою)
-        ESP_LOGI("APP", "Запуск режиму конфігурації (SoftAP)");
+        // Case A: Configuration is missing
+        ESP_LOGI("APP", "Starting configuration mode (SoftAP)");
         start_softap_and_scan();
         vTaskDelay(pdMS_TO_TICKS(1000));        
-        start_conf_webserver(); // Ваш сервер №1
+        start_conf_webserver(); // Start HTTP configuration server 
     } else {
-        // КЕЙС Б: Налаштування є — пробуємо підключитись
-        ESP_LOGI("APP", "Спроба підключення до %s", conf.sta.ssid);
+        // Case B: Configuration exists
+        ESP_LOGI("APP", "Attempting to connect to %s", (char*)conf.sta.ssid);
         if (connect_wifi_sta() == ESP_OK) {
-            ESP_LOGI("APP", "Запуск у режимі STA");
+            ESP_LOGI("APP", "Connected. Starting main services.");
             snprintf(sta_ssid, sizeof(sta_ssid), (char*)conf.sta.ssid);
-            initi_web_page_buffer();
-            start_main_webserver(); // Ваш сервер №2 (основний)
+            init_web_page_buffer();
+            start_main_webserver(); // Start main HTTP server
         } else {
-            // Помилка підключення (пароль невірний або роутер вимкнено)
-            ESP_LOGE("APP", "Не вдалося підключитись. Автозапуск SoftAP.");
-        esp_wifi_stop(); // Зупиняємо спроби STA, щоб вони не заважали SoftAP
-        s_retry_num = 0; // Скидаємо лічильник для майбутніх спроб
-        start_softap_and_scan();
-        vTaskDelay(pdMS_TO_TICKS(1000));
-        start_conf_webserver();
+            // Connection failed (wrong credentials or AP is unreachable)
+            ESP_LOGE("APP", "Connection failed. Falling back to SoftAP.");
+            esp_wifi_stop(); 
+            s_retry_num = 0; 
+            start_softap_and_scan();
+            vTaskDelay(pdMS_TO_TICKS(1000));
+            start_conf_webserver();
         }
     }
 }
