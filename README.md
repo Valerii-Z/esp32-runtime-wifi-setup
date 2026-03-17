@@ -8,6 +8,12 @@ The app also allows to change existing connection settings using a physical butt
 *   **ESP-IDF Native**: Built using the native Espressif IoT Development Framework.
 *   **Event-Driven**: Uses the ESP-IDF event loop for robust connection handling.
 
+## 📱 Web Interface Screens
+<p align="center">
+  <img src="images/after_scan_page.jpg" width="30%" alt="Network Scan" />
+  <img src="images/redirect_page.jpg" width="30%" alt="Connection Setup" />
+  <img src="images/success_page.jpg" width="30%" alt="Success Status" />
+</p>
 ## 🛠 Hardware & Software Requirements
 *   **Hardware**: ESP32 development board (e.g., ESP32-WROOM-32).
 *   **Toolchain**: ESP-IDF v5.x (tested with version [ВСТАВТЕ ВАШУ ВЕРСІЮ, наприклад 5.1]).
