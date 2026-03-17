@@ -8,6 +8,12 @@ The app also allows to change existing connection settings using a physical butt
 *   **ESP-IDF Native**: Built using the native Espressif IoT Development Framework.
 *   **Event-Driven**: Uses the ESP-IDF event loop for robust connection handling.
 
+## 🕹 Usage
+1. Power on your ESP32. If no Wi-Fi credentials are found, it will start in **SoftAP mode**.
+2. Connect your phone or PC to the Wi-Fi network created by the ESP32 (check your `sdkconfig` or code for the SSID name).
+3. Open your web browser and go to: **`http://192.168.4.1`**
+4. Scan for networks, select yours, enter the password, and click **Connect**.
+
 ## 📱 Web Interface Screens
 <p align="center">
   <img src="images/after_scan_page.jpg" width="30%" alt="Network Scan" />
