@@ -9,9 +9,9 @@ The app also allows to change existing connection settings using a physical butt
 *   **Event-Driven**: Uses the ESP-IDF event loop for robust connection handling.
 
 ## 🕹 Usage
-1. Power on your ESP32. If no Wi-Fi credentials are found, it will start in **SoftAP mode**.
-2. Connect your phone or PC to the Wi-Fi network created by the ESP32 (check your `sdkconfig` or code for the SSID name).
-3. Open your web browser and go to: **`http://192.168.4.1`**
+1. Power on your ESP32. If no Wi-Fi credentials are found in NVS, it will start in **SoftAP mode**.
+2. Connect your phone or PC to the Wi-Fi network created by the ESP32 (for this example SSID=ESP32_Setup and pwd=12345678).
+3. Open your web browser and go to: **`http://192.168.4.1`** (default ip)
 4. Scan for networks, select yours, enter the password, and click **Connect**.
 
 ## 📱 Web Interface Screens
@@ -23,7 +23,7 @@ The app also allows to change existing connection settings using a physical butt
 
 ## 🛠 Hardware & Software Requirements
 *   **Hardware**: ESP32 development board (e.g., ESP32-WROOM-32).
-*   **Toolchain**: ESP-IDF v5.x (tested with version [ВСТАВТЕ ВАШУ ВЕРСІЮ, наприклад 5.1]).
+*   **Toolchain**: ESP-IDF v5.x (tested with version 5.5).
 *   **IDE**: Visual Studio Code with ESP-IDF Extension.
 
 ## 📁 Project Structure
