@@ -10,7 +10,7 @@ The app also allows to change existing connection settings using a physical butt
 
 ## 🕹 Usage
 1. Power on your ESP32. If no Wi-Fi credentials are found in NVS, it will start in **SoftAP mode**.
-2. Connect your phone or PC to the Wi-Fi network created by the ESP32 (for this example SSID=ESP32_Setup and pwd=12345678).
+2. Connect your phone or PC to the Wi-Fi network created by the ESP32 (for this example SSID=**`ESP32_Setup`** and pwd=**`12345678`**).
 3. Open your web browser and go to: **`http://192.168.4.1`** (default ip)
 4. Scan for networks, select yours, enter the password, and click **Connect**.
 
