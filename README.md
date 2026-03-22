@@ -1,7 +1,7 @@
 # ESP32 Runtime Wi-Fi Configuration
 
 A demonstrative project for ESP32 using the **ESP-IDF** framework and **VS Code**. This application shows how to implement dynamic Wi-Fi connection setup during runtime without hardcoding credentials in the source code.
-The app also allows to change existing connection settings using a physical button. Holding the button down for 5 seconds or more clears the credentials stored in the NVS. The expiration of the 5 seconds is confirmed by a blinking LED on the debug board connected to pin 2.
+The app also allows to change existing connection settings using a physical button. Holding the button down for 5 seconds or more clears the credentials stored in the NVS. The expiration of 5 seconds is confirmed by the flashing of the LED on the debug board connected to pin 2.
 
 ## 🚀 Features
 *   **Runtime Configuration**: Setup Wi-Fi connection while the application is running.
@@ -11,8 +11,11 @@ The app also allows to change existing connection settings using a physical butt
 ## 🕹 Usage
 1. Power on your ESP32. If no Wi-Fi credentials are found in NVS, it will start in **SoftAP mode**.
 2. Connect your phone or PC to the Wi-Fi network created by the ESP32 (for this example SSID=**`ESP32_Setup`** and pwd=**`12345678`**).
-3. Open your web browser and go to: **`http://192.168.4.1`** (default ip)
-4. Scan for networks, select yours, enter the password, and click **Connect**.
+3. Open your web browser and go to: **`http://192.168.4.1`** (default ip). This address will give you access to the configuration instance of the http server, which allows you to configure the connection of the ESP32 module to the network you specified.
+4. Select the required network from the drop-down list of scanned networks, enter the password, and click **Connect**.
+5. If the credentials are entered correctly, the ESP32 will connect to the selected network and receive an IP address on that network, which will be displayed on the screen.
+6. After this, the ESP32 will reboot, and the internet browser used for configuration will be automatically redirected to the address specified in the previous step. For this project, this is the primary HTTP server instance.
+7. If automatic redirection does not occur for some reason, you will need to manually navigate to the specified IP address.
 
 ## 📱 Web Interface Screens
 <p align="center">
